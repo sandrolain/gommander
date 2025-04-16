@@ -32,12 +32,13 @@ func getTableRowForPath(dirPath string, name string) (table.Row, error) {
 	}
 
 	row := table.NewRow(table.RowData(map[string]interface{}{
-		"path":        path,
-		"dir":         isDir,
-		"name":        name,
-		"size":        formattedSize,
-		"usize":       usize,
-		"permissions": permissions,
+		"path":     path,
+		"dir":      isDir,
+		"name":     name,
+		"size":     formattedSize,
+		"usize":    usize,
+		"mode":     permissions,
+		"modified": info.ModTime().Format("2006-01-02 15:04:05"),
 	}))
 
 	return row, nil

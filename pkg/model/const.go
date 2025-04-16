@@ -18,11 +18,19 @@ const (
 )
 
 const (
+	KeyQuit   = "q"
+	KeyEnter  = "enter"
+	KeyExit   = "esc"
+	KeyBack   = "backspace"
+	KeySwitch = "tab"
+	KeyHelp   = "ctrl+?"
 	KeyCopy   = "ctrl+c"
 	KeyCopyO  = "ctrl+r"
 	KeyMove   = "ctrl+x"
-	KeyMoveO  = "ctrl+t"
+	KeyMoveO  = "ctrl+r"
+	KeyDelete = "ctrl+d"
+	KeyTrash  = "delete"
 	KeyMkdir  = "ctrl+f"
 	KeyMkfile = "ctrl+n"
-	KeyVscode = "ctrl+o"
+	KeyVscode = "ctrl+k"
 )

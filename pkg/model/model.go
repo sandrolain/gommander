@@ -85,6 +85,8 @@ func InitialModel(ul UpdateWatcherFn, ur UpdateWatcherFn) model {
 	leftFilesInfo, leftTable := createTable(currentDir)
 	rightFilesInfo, rightTable := createTable(currentDir)
 
+	leftTable = leftTable.Focused(true)
+
 	m := model{
 		leftPanelDir:       currentDir,
 		rightPanelDir:      currentDir,
@@ -131,11 +133,11 @@ func createTable(dir string) (rows.FilesInfo, table.Model) {
 
 	t := table.New([]table.Column{
 		nameCol,
-		table.NewColumn("size", "Size", 15),
-		table.NewColumn("permissions", "Permissions", 15).WithStyle(lipgloss.NewStyle().Align(lipgloss.Center)),
+		table.NewColumn("size", "Size", 8),
+		table.NewColumn("mode", "Mode", 10).WithStyle(lipgloss.NewStyle().Align(lipgloss.Center)),
+		table.NewColumn("modified", "Modified", 19).WithStyle(lipgloss.NewStyle().Align(lipgloss.Center)),
 	}).WithRows(rows).
 		BorderRounded().
-		Focused(true).
 		SelectableRows(true).
 		WithRowStyleFunc(func(rsfi table.RowStyleFuncInput) lipgloss.Style {
 			if rsfi.IsHighlighted {
@@ -147,7 +149,7 @@ func createTable(dir string) (rows.FilesInfo, table.Model) {
 			}
 
 			if rsfi.Row.Data["dir"] == true {
-				return lipgloss.NewStyle().Foreground(lipgloss.Color(ColYellow))
+				return lipgloss.NewStyle().Foreground(lipgloss.Color(ColOrange))
 			}
 
 			return lipgloss.NewStyle().Foreground(lipgloss.Color(ColLightBlue))
@@ -257,13 +259,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		switch key {
-		case "q", "ctrl+q":
+		case KeyQuit:
 			return m, tea.Quit
-		case "tab":
+		case KeySwitch:
 			if m.active == "left" {
 				m.active = "right"
+				m.leftTable = m.leftTable.Focused(false)
+				m.rightTable = m.rightTable.Focused(true)
 			} else {
 				m.active = "left"
+				m.leftTable = m.leftTable.Focused(true)
+				m.rightTable = m.rightTable.Focused(false)
 			}
 		case "space":
 			var currentTable *table.Model
@@ -283,7 +289,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 
-		case "enter":
+		case KeyEnter:
 
 			newPath, err := m.getHighlightedRowPath(false)
 			if err != nil {
@@ -296,7 +302,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.showError(err.Error())
 			}
 
-		case "esc", "backspace":
+		case KeyExit, KeyBack:
 
 			var currentPath string
 			if m.active == "left" {
@@ -373,7 +379,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return nil
 			}
 
-		case "delete", "ctrl+t":
+		case KeyTrash:
 
 			paths, err := m.getCurrentRowsPaths()
 			if err != nil {
