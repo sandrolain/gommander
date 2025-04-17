@@ -2,6 +2,8 @@
 
 `gommander` is a terminal-based file manager written in Go. It provides a dual-pane interface for navigating and managing files and directories with ease.
 
+![](./docs/screenshot.png)
+
 ## Features
 
 - Dual-pane file navigation
