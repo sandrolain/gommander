@@ -64,9 +64,11 @@ type model struct {
 	selectedRows       map[string]bool // Track selected rows
 	leftFilesInfo      rows.FilesInfo
 	rightFilesInfo     rows.FilesInfo
+	showHelp           bool
 	errorMessage       string
 	confirmMessage     string
 	confirmCallback    ConfirmCallback
+	confirmBtn         int
 	inputMessage       string
 	inputCallback      InputCallback
 	inputValue         string // Nome della nuova directory
@@ -188,6 +190,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		m.key = key
 
+		if m.showHelp {
+			if key == KeyEnter || key == KeyCancel {
+				m.showHelp = false
+				return m, nil
+			}
+			return m, nil
+		}
+
 		if m.inputMessage != "" {
 
 			if key == "enter" {
@@ -224,13 +234,26 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if m.errorMessage != "" || m.confirmMessage != "" {
 			switch key {
-			case "enter":
+			case KeySwitch:
+				if m.confirmMessage != "" {
+					m.confirmBtn = (m.confirmBtn + 1) % 2
+					return m, nil
+				}
+
+			case KeyEnter:
 				if m.errorMessage != "" {
 					m.errorMessage = "" // Clear error message
 					return m, nil
 				}
 
 				if m.confirmCallback != nil {
+					if m.confirmBtn == 0 {
+						m.confirmBtn = 0
+						m.confirmMessage = ""
+						m.confirmCallback = nil
+						return m, nil
+					}
+
 					err := m.confirmCallback(&m)
 					if err != nil {
 						m.showError(err.Error())
@@ -241,7 +264,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return m, nil
 				}
 
-			case "esc":
+			case KeyCancel:
 
 				if m.errorMessage != "" {
 					m.errorMessage = "" // Clear error message
@@ -261,6 +284,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch key {
 		case KeyQuit:
 			return m, tea.Quit
+		case KeyHelp:
+
+			m.showHelp = !m.showHelp
+
 		case KeySwitch:
 			if m.active == "left" {
 				m.active = "right"
@@ -271,7 +298,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.leftTable = m.leftTable.Focused(true)
 				m.rightTable = m.rightTable.Focused(false)
 			}
-		case "space":
+		case KeySelect:
 			var currentTable *table.Model
 			if m.active == "left" {
 				currentTable = &m.leftTable
@@ -302,7 +329,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.showError(err.Error())
 			}
 
-		case KeyExit, KeyBack:
+		case KeyBack:
 
 			var currentPath string
 			if m.active == "left" {
@@ -633,7 +660,7 @@ func (m model) View() string {
 			fV(rightFaint, fmt.Sprintf("%d", m.rightFilesInfo.Files))+fL(rightFaint, " - ")+fL(rightFaint, fmt.Sprintf("%d/%d", m.rightTable.CurrentPage(), m.rightTable.MaxPages())),
 	)
 
-	leftTable := m.leftTable.WithStaticFooter(fL(leftFaint, m.log+" - "+m.key+" - ") + leftFooter)
+	leftTable := m.leftTable.WithStaticFooter(leftFooter)
 	rightTable := m.rightTable.WithStaticFooter(rightFooter)
 
 	if m.active == "left" {
@@ -655,6 +682,10 @@ func (m model) View() string {
 
 	if m.confirmMessage != "" {
 		return m.renderConfirmDialog(m.confirmMessage)
+	}
+
+	if m.showHelp {
+		return m.renderHelpDialog()
 	}
 
 	return m.view

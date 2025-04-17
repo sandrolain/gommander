@@ -46,8 +46,16 @@ func (m *model) renderOverlayViews(modal string) string {
 }
 
 func (m *model) renderConfirmDialog(text string) string {
-	okButton := activeButtonStyle.Render("Ok [Enter]")
-	cancelButton := buttonStyle.Render("Cancel [Esc]")
+	cancelStyle := activeButtonStyle
+	confirmStyle := buttonStyle
+
+	if m.confirmBtn == 1 {
+		cancelStyle = buttonStyle
+		confirmStyle = activeButtonStyle
+	}
+
+	cancelButton := cancelStyle.Render("Cancel")
+	confirmButton := confirmStyle.Render("Confirm")
 
 	width := min(lipgloss.Width(text), m.windowWidth)
 
@@ -55,7 +63,7 @@ func (m *model) renderConfirmDialog(text string) string {
 	if m.inputValue != "" {
 		question += "\n" + lipgloss.NewStyle().Align(lipgloss.Center).Render(m.inputValue) + "\n"
 	}
-	buttons := lipgloss.JoinHorizontal(lipgloss.Top, okButton, cancelButton)
+	buttons := lipgloss.JoinHorizontal(lipgloss.Top, cancelButton, confirmButton)
 	ui := lipgloss.JoinVertical(lipgloss.Center, question, buttons)
 
 	modal := dialogBoxStyle.Render(ui)
@@ -64,11 +72,39 @@ func (m *model) renderConfirmDialog(text string) string {
 }
 
 func (m *model) renderAlertDialog(text string) string {
-	okButton := activeButtonStyle.Render("Ok [Enter / Esc]")
+	okButton := activeButtonStyle.Render("Ok")
 
 	width := min(lipgloss.Width(text), m.windowWidth-20)
 
 	question := lipgloss.NewStyle().Width(width).Align(lipgloss.Center).MarginBottom(1).Render(text)
+	buttons := lipgloss.JoinHorizontal(lipgloss.Top, okButton)
+	ui := lipgloss.JoinVertical(lipgloss.Center, question, buttons)
+
+	modal := dialogBoxStyle.Render(ui)
+
+	return m.renderOverlayViews(modal)
+}
+
+func (m *model) renderHelpDialog() string {
+	okButton := activeButtonStyle.Render("Ok")
+
+	text := ""
+
+	maxLength := 0
+	for _, item := range helpArray {
+		if len(item[0]) > maxLength {
+			maxLength = len(item[0])
+		}
+	}
+
+	for _, item := range helpArray {
+		paddedKey := lipgloss.NewStyle().Bold(true).Render(item[0]) + strings.Repeat(" ", maxLength-len(item[0]))
+		text += paddedKey + " : " + item[1] + "\n"
+	}
+
+	width := min(lipgloss.Width(text), m.windowWidth-20)
+
+	question := lipgloss.NewStyle().Width(width).Align(lipgloss.Left).MarginBottom(1).Render(text)
 	buttons := lipgloss.JoinHorizontal(lipgloss.Top, okButton)
 	ui := lipgloss.JoinVertical(lipgloss.Center, question, buttons)
 
