@@ -248,7 +248,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 				if m.confirmCallback != nil {
 					if m.confirmBtn == 0 {
-						m.confirmBtn = 0
 						m.confirmMessage = ""
 						m.confirmCallback = nil
 						return m, nil
@@ -258,6 +257,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					if err != nil {
 						m.showError(err.Error())
 					}
+					m.confirmBtn = 0
 					m.confirmCallback = nil
 					m.confirmMessage = ""
 
@@ -660,6 +660,7 @@ func (m model) View() string {
 			fV(rightFaint, fmt.Sprintf("%d", m.rightFilesInfo.Files))+fL(rightFaint, " - ")+fL(rightFaint, fmt.Sprintf("%d/%d", m.rightTable.CurrentPage(), m.rightTable.MaxPages())),
 	)
 
+	//	leftTable := m.leftTable.WithStaticFooter(fL(leftFaint, m.log+" - "+m.key+" - ") + leftFooter)
 	leftTable := m.leftTable.WithStaticFooter(leftFooter)
 	rightTable := m.rightTable.WithStaticFooter(rightFooter)
 
