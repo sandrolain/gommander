@@ -10,6 +10,39 @@ import (
 )
 
 func CopyFile(srcFilePath, dstDirPath string, permitOverwrite bool) error {
+	srcInfo, err := os.Stat(srcFilePath)
+	if err != nil {
+		return fmt.Errorf("error stating file %v: %v", srcFilePath, err)
+	}
+
+	if srcInfo.IsDir() {
+		// Copia ricorsiva della directory
+		fileName := filepath.Base(srcFilePath)
+		dstDir := filepath.Join(dstDirPath, fileName)
+		if !permitOverwrite {
+			if _, err := os.Stat(dstDir); err == nil {
+				return fmt.Errorf("directory %v already exists", dstDir)
+			}
+		}
+		err := os.MkdirAll(dstDir, srcInfo.Mode())
+		if err != nil {
+			return fmt.Errorf("error creating directory %v: %v", dstDir, err)
+		}
+		entries, err := os.ReadDir(srcFilePath)
+		if err != nil {
+			return fmt.Errorf("error reading directory %v: %v", srcFilePath, err)
+		}
+		for _, entry := range entries {
+			srcEntryPath := filepath.Join(srcFilePath, entry.Name())
+			err := CopyFile(srcEntryPath, dstDir, permitOverwrite)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	// Copia file singolo
 	fileName := filepath.Base(srcFilePath)
 
 	srcFile, err := os.Open(srcFilePath)
@@ -17,11 +50,6 @@ func CopyFile(srcFilePath, dstDirPath string, permitOverwrite bool) error {
 		return err
 	}
 	defer srcFile.Close()
-
-	srcInfo, err := os.Stat(srcFilePath)
-	if err != nil {
-		return fmt.Errorf("error stating file %v: %v", srcFilePath, err)
-	}
 
 	dstFilePath := filepath.Join(dstDirPath, fileName)
 
